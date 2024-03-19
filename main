@@ -1,0 +1,20 @@
+#!/bin/env bash
+
+function main() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+            echo "Help!!!"
+            shift
+            ;;
+        *)
+            echo "Error: Unknown option '$1'"
+            echo "Try running '$0 -h'"
+            exit 1
+            ;;
+        esac
+    done
+    echo Success
+}
+
+main $@
