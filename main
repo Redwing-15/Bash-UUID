@@ -8,17 +8,34 @@ function generate_uuid() {
     local type="$1"
     case $type in
         1)
-        echo "Generating UUID 1"
+        local timestamp=$(date +%s%N)
+
+        local intervals=$(($timestamp / 100))
+        local time=$(($intervals + 122192928000000000))
+
+        local timeLow=$(printf "%08X\n" ${time:0:10})
+        local timeMid=$(printf "%04X\n" $((10#${time:10:4})))
+        local timeHigh=$(printf "%04X\n" $((10#${time:14:4}+1)))
+        local clock=$(printf "%04X\n" $((RANDOM % 16384)))
+        local node=$(openssl rand -hex 6)
+        local uuid=$timeLow"-"$timeMid"-"$timeHigh"-"$clock"-"$node
         ;;
-        2)
-        echo "Generating UUID 2"
+        4)
+        local random=$(openssl rand -hex 16)
+        local seventh=$(($(("0x"${random:12:2} & "0x0F")) | "0x40"))
+        local seventh=$(printf "%X" "$seventh")
+        local ninth=$(($(("0x"${random:16:2} & "0x3F")) | "0x80"))
+        local ninth=$(printf "%X" "$ninth")
+        local uuid=${random:0:12}$seventh${random:14:2}$ninth${random:18:14}
+        local uuid=${uuid:0:8}"-"${uuid:8:4}"-"${uuid:12:4}"-"${uuid:16:4}"-"${uuid:20:12}
         ;; 
         *)
-        echo "Error: Unknown UUID type requested"
+        echo "Error: Unknown UUID type requested!"
         echo "Try running '$0 -h'"
         exit 1
         ;;
     esac
+    echo "$uuid" | tr '[:lower:]' '[:upper:]'
 }
 
 function main() {
@@ -29,7 +46,8 @@ function main() {
             shift
             ;;
             -g|--generate_uuid)
-            generate_uuid "$2"
+            uuid=$(generate_uuid "$2")
+            echo $uuid
             shift 2
             ;;
         *)
@@ -39,7 +57,6 @@ function main() {
             ;;
         esac
     done
-    help
 }
 
 main $@
